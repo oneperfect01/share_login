@@ -10,19 +10,25 @@ CORS(app)
 
 @app.route('/')
 def index():
-    return jsonify({'code': 200, 'data': 'success'})
+    return jsonify("msg":"ok")
 
 @app.route('/api/outh', methods=['POST'])
 def api_outh():
     data = request.form  # 获取JSON数据
-    usertoken = data.get('token', '')  # 获取usertoken
+    usertoken = data.get('usertoken', '')  # 获取usertoken
     carid = data.get('carid', '')  # 获取carid
     logger.info(f"User ID: {carid}")  
     logger.info(f"User Token: {usertoken}")
-    reqs={
-        "code": 1,
+    if usertoken == "adminAAA123456":
+        reqs={
+        "code": 0,
         "msg": "登陆失败时的提示信息"
         }
+    else:
+        reqs={
+            "code": 1,
+            "msg": "登陆成功时的提示信息"
+            }
     return jsonify(reqs)
 
 
@@ -33,7 +39,7 @@ def log():
 
     username = data.get('username')
     password = data.get('password')
-    token=str(username + password)
+    token=str(username +"AAA"+ password)
     # 模拟验证过程
     if 1:
         # 成功登录，返回 token 和用户名
