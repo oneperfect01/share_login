@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .cardclss {
+      margin: 10px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #f0f0f0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+    .box-class {
+      padding: 10px;
+      background-color: #fff;
+    }
+    .message-with-dot {
+      display: flex;
+      align-items: center;
+      padding-top: 10px;
+    }
+    .message-with-dot::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 10px;
+      background-color: var(--dot-color);
+    }
+    .title {
+      font-weight: bold;
+    }
+    .button {
+      border: none;
+      padding: 5px 10px;
+      margin-right: 10px;
+      border-radius: 3px;
+      color: white;
+      cursor: pointer;
+    }
+    .plus {
+      background-color: #ab68ff;
+    }
+    .basic {
+      background-color: #19c37d;
+    }
+    .team {
+      background-color: #68bceb;
+    }
+    .pagination-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .page-select {
+      padding: 5px;
+    }
+
+    .pagination-controls, .login-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .login-container {
+      justify-content: flex-end;
+    }
+    .login-btn, .logout-btn {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .login-btn:hover, .logout-btn:hover {
+      background-color: #45a049;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      width: 300px;
+    }
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .modal button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .modal button:hover {
+      background-color: #45a049;
+    }
+  </style>
+  <title>Car List with Pagination</title>
+</head>
+<body>
+
+
+
+<!-- Login Button and User Info -->
+<div class="login-container">
+    <button id="loginBtn" class="login-btn">Login</button>
+  </div>
+
+<!-- Modal for Login Form -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h3>Login</h3>
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button id="submitLogin">Login</button>
+    </div>
+  </div>
+
+
+
+<!-- Pagination Controls -->
+<div class="pagination-controls">
+  <button id="prevPage">Previous Page</button>
+
+  <label for="pageSelect">Select Page: </label>
+  <select id="pageSelect" class="page-select"></select>
+
+  <button id="nextPage">Next Page</button>
+</div>
+
+<!-- Car List Container -->
+<div id="car-list"></div>
+
+<script>
+    
+  const loginapi = ""
+// 填写后端地址
+  
+  const itemslist = [
+    { carID: 'giqslbmh', isPlus: 1, label: 'Plus', color: 'green', message: '空闲|Available' },
+    { carID: 'nghy54c1', isPlus: 0, label: 'Basic', color: 'red', message: '繁忙|Busy' },
+    { carID: 'T2345', isPlus: 1, label: '测试车', color: 'blue', message: '无效' },
+    { carID: 'A6789', isPlus: 0, label: '测试车', color: 'yellow', message: '无效' },
+    { carID: 'T3456', isPlus: 1, label: '测试车', color: 'orange', message: '无效' },
+    { carID: 'A7890', isPlus: 0, label: '测试车', color: 'pink', message: '无效' },
+    { carID: 'T4567', isPlus: 1, label: '测试车', color: 'purple', message: '无效' },
+    { carID: 'A8901', isPlus: 0, label: '测试车', color: 'brown', message: '无效' },
+    // 模拟的车队信息
+  ];
+
+  const itemsPerPage = 3; // Number of items per page
+  let currentPage = 1; // Starting page
+
+  function renderCarList(page) {
+    const carList = document.getElementById('car-list');
+    carList.innerHTML = ''; // Clear any existing items
+
+    // Calculate starting and ending index for the current page
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, itemslist.length);
+
+    
+    // Render the items for the current page
+    for (let i = startIndex; i < endIndex; i++) {
+      const item = itemslist[i];
+
+      // Create card element
+      const card = document.createElement('div');
+      card.className = 'cardclss';
+      card.onclick = () => redirectTo(item.carID);
+
+      // Create button for label
+      const labelButton = document.createElement('button');
+      labelButton.className = 'button';
+      labelButton.classList.add(item.isPlus === 0 ? 'basic' : 'plus');
+      labelButton.textContent = item.label;
+
+      // Add TEAM button conditionally
+      const teamButton = document.createElement('button');
+      if (item.label.toLowerCase() === 'plus' && item.carID.toLowerCase().startsWith('t')) {
+        teamButton.className = 'button team';
+        teamButton.textContent = 'TEAM';
+      }
+
+      // Create title
+      const title = document.createElement('span');
+      title.className = 'title';
+      title.textContent = item.carID;
+
+      // Create message with dot
+      const messageWithDot = document.createElement('div');
+      messageWithDot.className = 'message-with-dot';
+      messageWithDot.style.setProperty('--dot-color', item.color);
+      messageWithDot.textContent = '状态: ' + item.message.replaceAll('空闲|', '').replaceAll('繁忙|', '');
+
+      // Append elements to the card
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'space-between';
+
+      const leftContainer = document.createElement('div');
+      leftContainer.style.display = 'flex';
+      leftContainer.style.alignItems = 'center';
+      leftContainer.appendChild(labelButton);
+      if (teamButton.textContent === 'TEAM') {
+        leftContainer.appendChild(teamButton);
+      }
+
+      container.appendChild(leftContainer);
+      container.appendChild(title);
+      card.appendChild(container);
+      card.appendChild(messageWithDot);
+
+      // Append card to the car list
+      carList.appendChild(card);
+    }
+  }
+
+  function setupPagination() {
+    const pageSelect = document.getElementById('pageSelect');
+    const totalPages = Math.ceil(itemslist.length / itemsPerPage);
+
+    // Populate page dropdown
+    for (let i = 1; i <= totalPages; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `Page ${i}`;
+      pageSelect.appendChild(option);
+    }
+
+    pageSelect.value = currentPage; // Set default page to 1
+
+    // Event listener for page selection
+    pageSelect.addEventListener('change', function () {
+      currentPage = parseInt(this.value);
+      renderCarList(currentPage);
+    });
+
+    // Handle previous and next buttons
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        pageSelect.value = currentPage;
+        renderCarList(currentPage);
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        pageSelect.value = currentPage;
+        renderCarList(currentPage);
+      }
+    });
+  }
+
+
+// // Call restoreLoginState on page load to restore login state
+// window.onload = restoreLoginState;
+
+  function showLoginModal() {
+    document.getElementById('loginModal').style.display = 'flex';
+  }
+
+  function hideLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+  }
+
+  function updateLoginStatus() {
+    const loginContainer = document.querySelector('.login-container');
+    if (user) {
+      loginContainer.innerHTML = `<span>Welcome, ${user}</span> <button id="logoutBtn" class="logout-btn">Logout</button>`;
+      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    } else {
+      loginContainer.innerHTML = `<button id="loginBtn" class="login-btn">Login</button>`;
+      document.getElementById('loginBtn').addEventListener('click', showLoginModal);
+    }
+  }
+
+
+// Helper function to set a cookie with proper attributes
+function setCookie(name, value, days) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); // Convert days to milliseconds
+  const expires = "expires=" + date.toUTCString();
+  document.cookie = `${name}=${value}; ${expires}; path=/; SameSite=Lax;`;
+}
+
+// Helper function to get a cookie by name
+function getCookie(name) {
+  const cookieName = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const cookieArray = decodedCookie.split(';');
+  for (let i = 0; i < cookieArray.length; i++) {
+    let cookie = cookieArray[i].trim();
+    if (cookie.indexOf(cookieName) === 0) {
+      return cookie.substring(cookieName.length, cookie.length);
+    }
+  }
+  return "";
+}
+
+// Helper function to delete a cookie by name
+function deleteCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+}
+
+// After login, store the token and user in cookies with a 7-day expiration
+function handleLogin() {
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  // Simulate an API call to login
+  fetch(loginapi, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.name && data.token) {
+      user = data.name;
+      token = data.token;  // Store the token
+
+      // Store user and token in cookies for 7 days
+      setCookie('user', user, 7);
+      setCookie('token', token, 7);
+      
+      updateLoginStatus();
+      hideLoginModal();
+    } else {
+      alert('Login failed!');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+
+// On page load, restore the user and token from cookies
+function restoreLoginState() {
+  const storedUser = getCookie('user');
+  const storedToken = getCookie('token');
+  
+  if (storedUser && storedToken) {
+    user = storedUser;
+    token = storedToken;
+    updateLoginStatus();
+  }
+}
+
+
+
+// Helper function to URL encode the data
+function encodeFormData(data) {
+  return Object.keys(data)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+}
+
+
+
+// Function to redirect with POST data and handle server-side redirection
+function redirectTo(carID) {
+  // Retrieve token from cookies
+  const token = getCookie('token');
+
+  // Prepare the form data
+  const formData = {
+    usertoken: token || '',  // Use the token if available, else send an empty string
+    action: 'default'
+  };
+
+  // Encode the form data for application/x-www-form-urlencoded
+  const encodedFormData = encodeFormData(formData);
+
+  // Send the POST request to the login endpoint with the carID as a URL parameter
+  fetch(`/auth/login?carid=${carID}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: encodedFormData,
+    redirect: 'follow'  // Automatically follow the server's redirection
+  })
+  .then(response => {
+    if (response.redirected) {
+      // If redirected, log the final URL (optional)
+    //   console.log( response.url);
+      window.location.href = response.url;
+    } else {
+    //   console.log('No redirection occurred, response status:', response.status);
+      alert('你没有权限啊');
+    }
+  })
+  .catch(error => {
+    console.error('Error during login request:', error);
+    alert('An error occurred during login. Please try again.');
+  });
+}
+
+
+
+// Call restoreLoginState on page load to restore login state from cookies
+window.onload = restoreLoginState;
+
+
+
+
+
+function handleLogout() {
+  // Delete the user and token cookies
+  deleteCookie('user');
+  deleteCookie('token');
+
+  // Clear the in-memory user and token
+  user = null;
+  token = null;
+
+  // Update the UI to show the login button again
+  updateLoginStatus();
+}
+
+
+
+
+  document.getElementById('loginBtn').addEventListener('click', showLoginModal);
+  document.getElementById('submitLogin').addEventListener('click', handleLogin);
+  document.getElementById('loginModal').addEventListener('click', (event) => {
+    if (event.target === document.getElementById('loginModal')) {
+      hideLoginModal();
+    }
+  });
+
+
+  // Initialize the car list and pagination
+  renderCarList(currentPage);
+  setupPagination();
+</script>
+
+</body>
+</html>
